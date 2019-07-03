@@ -15,6 +15,7 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
@@ -78,8 +79,14 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case awstypes.Name, libvirttypes.Name, nonetypes.Name:
+	case libvirttypes.Name, nonetypes.Name:
 		return nil
+	case awstypes.Name:
+		awsConfig, err := aws.CloudProviderConfig(installConfig.Config.Platform.AWS)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = awsConfig
 	case openstacktypes.Name:
 		opts := &ospclientconfig.ClientOpts{}
 		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
