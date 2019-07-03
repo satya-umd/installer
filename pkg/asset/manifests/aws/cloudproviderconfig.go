@@ -59,7 +59,7 @@ func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 
 func convertListToMap(params *awstypes.Platform) (map[string]serviceOverride, error){
 	index := 1
-	var mapObject map[string]serviceOverride
+	mapObject := make(map[string]serviceOverride, len(params.CustomRegionOverride))
 	for _, t := range params.CustomRegionOverride {
 		mapObject[strconv.Itoa(index)] =  serviceOverride{
 			Service       : t.Service,
