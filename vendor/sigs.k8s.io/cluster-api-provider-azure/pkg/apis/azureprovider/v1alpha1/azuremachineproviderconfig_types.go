@@ -47,6 +47,25 @@ type AzureMachineProviderSpec struct {
 	OSDisk        OSDisk `json:"osDisk"`
 	SSHPublicKey  string `json:"sshPublicKey"`
 	SSHPrivateKey string `json:"sshPrivateKey"`
+	PublicIP      bool   `json:"publicIP"`
+
+	// Subnet to use for this instance
+	Subnet string `json:"subnet"`
+
+	// PublicLoadBalancer to use for this instance
+	PublicLoadBalancer string `json:"publicLoadBalancer"`
+
+	// InternalLoadBalancerName to use for this instance
+	InternalLoadBalancer string `json:"internalLoadBalancer"`
+
+	// NatRule to set inbound NAT rule of the load balancer
+	NatRule *int `json:"natRule"`
+
+	// ManagedIdentity to set managed identity name
+	ManagedIdentity string `json:"managedIdentity"`
+
+	// Vnet to set virtual network name
+	Vnet string `json:"vnet"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

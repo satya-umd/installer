@@ -34,6 +34,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -121,6 +122,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		aws.ConfigMasters(machines, clusterID.InfraID)
+	case gcptypes.Name:
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
@@ -143,7 +145,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		openstack.ConfigMasters(machines, clusterID.InfraID)
 	case azuretypes.Name:
 		mpool := defaultAzureMachinePoolPlatform()
-		mpool.InstanceType = azuredefaults.InstanceClass(installconfig.Config.Platform.Azure.Region)
+		mpool.InstanceType = azuredefaults.ControlPlaneInstanceType(installconfig.Config.Platform.Azure.Region)
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 		pool.Platform.Azure = &mpool

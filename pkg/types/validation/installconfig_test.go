@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -45,12 +46,24 @@ func validInstallConfig() *types.InstallConfig {
 			AWS: validAWSPlatform(),
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+		Proxy: &types.Proxy{
+			HTTPProxy:  "http://user:password@127.0.0.1:8080",
+			HTTPSProxy: "https://user:password@127.0.0.1:8080",
+			NoProxy:    "valid-proxy.com, 172.30.0.0/16",
+		},
 	}
 }
 
 func validAWSPlatform() *aws.Platform {
 	return &aws.Platform{
 		Region: "us-east-1",
+	}
+}
+
+func validGCPPlatform() *gcp.Platform {
+	return &gcp.Platform{
+		ProjectID: "myProject",
+		Region:    "us-east1",
 	}
 }
 
@@ -123,11 +136,11 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "overly long cluster domain",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.ObjectMeta.Name = fmt.Sprintf("test-cluster%050d", 0)
-				c.BaseDomain = fmt.Sprintf("test-domain%050d.a%060d.b%060d.c%060d", 0, 0, 0, 0)
+				c.ObjectMeta.Name = fmt.Sprintf("test-cluster%042d", 0)
+				c.BaseDomain = fmt.Sprintf("test-domain%056d.a%060d.b%060d.c%060d", 0, 0, 0, 0)
 				return c
 			}(),
-			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster%050d.test-domain%050d.a%060d.b%060d.c%060d", 0, 0, 0, 0, 0) + `": must be no more than 253 characters$`,
+			expectedError: `^baseDomain: Invalid value: "` + fmt.Sprintf("test-cluster%042d.test-domain%056d.a%060d.b%060d.c%060d", 0, 0, 0, 0, 0) + `": must be no more than 253 characters$`,
 		},
 		{
 			name: "missing networking",
@@ -348,7 +361,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{((, )?\w+:\(\*\w+\.Platform\)\(nil\))+}: must specify one of the platforms \(aws, azure, none, openstack, vsphere\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{((, )?\w+:\(\*\w+\.Platform\)\(nil\))+}: must specify one of the platforms \(aws, azure, gcp, none, openstack, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -379,7 +392,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, azure, none, openstack, vsphere\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, azure, gcp, none, openstack, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -391,7 +404,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, azure, none, openstack, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, azure, gcp, none, openstack, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -450,6 +463,72 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
+		},
+		{
+			name: "empty proxy settings",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = ""
+				c.Proxy.HTTPSProxy = ""
+				c.Proxy.NoProxy = ""
+				return c
+			}(),
+			expectedError: `^proxy: Required value: must include httpProxy or httpsProxy$`,
+		},
+		{
+			name: "invalid HTTPProxy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPProxy = "http://bad%20uri"
+				return c
+			}(),
+			expectedError: `^\QHTTPProxy: Invalid value: "http://bad%20uri": parse http://bad%20uri: invalid URL escape "%20"\E$`,
+		},
+		{
+			name: "invalid HTTPSProxy",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.HTTPSProxy = "https://bad%20uri"
+				return c
+			}(),
+			expectedError: `^\QHTTPSProxy: Invalid value: "https://bad%20uri": parse https://bad%20uri: invalid URL escape "%20"\E$`,
+		},
+		{
+			name: "invalid NoProxy domain",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, .bad-proxy."
+				return c
+			}(),
+			expectedError: `^\QNoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')\E$`,
+		},
+		{
+			name: "invalid NoProxy CIDR",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, 172.bad.CIDR.0/16"
+				return c
+			}(),
+			expectedError: `^\QNoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')\E$`,
+		},
+		{
+			name: "invalid NoProxy domain & CIDR",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Proxy.NoProxy = "good-no-proxy.com, a-good-one, .bad-proxy., another,   172.bad.CIDR.0/16, good-end"
+				return c
+			}(),
+			expectedError: `^\Q[NoProxy: Invalid value: ".bad-proxy.": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.'), NoProxy: Invalid value: "172.bad.CIDR.0/16": must be a CIDR or domain, without wildcard characters and without leading or trailing dots ('.')]\E$`,
+		},
+		{
+			name: "valid GCP platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					GCP: validGCPPlatform(),
+				}
+				return c
+			}(),
 		},
 	}
 	for _, tc := range cases {
