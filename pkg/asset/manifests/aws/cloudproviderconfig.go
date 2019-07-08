@@ -63,7 +63,7 @@ func convertListToMap(params *awstypes.Platform) (map[string]serviceOverride, er
 	for _, t := range params.CustomRegionOverride {
 		mapObject[strconv.Itoa(index)] =  serviceOverride{
 			Service       : t.Service,
-			Region        : t.Region,
+			Region        : params.Region,
 			URL           : t.URL,
 		}
 		index++
