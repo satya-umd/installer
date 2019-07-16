@@ -19,3 +19,14 @@ type Platform struct {
 	//Custom AWS Secret Region Struct
 	CustomRegionOverride []CustomEndpoint  `json:"customRegionOverride,omitempty"` 
 }
+
+func (p *Platform) FetchCustomEndpointsMap() (map[string]string)  {
+	endpointMap := make(map[string]string)	
+	if(len(p.CustomRegionOverride) == 0){
+		return nil
+	}
+	for _, endpoint := range p.CustomRegionOverride {
+		endpointMap[endpoint.Service] = endpoint.URL
+	}
+	return endpointMap
+}

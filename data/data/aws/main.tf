@@ -9,6 +9,12 @@ locals {
 
 provider "aws" {
   region = var.aws_region
+  dynamic "endpoints" {
+    for_each = var.custom_endpoints
+    content {
+      endpoints.key = endpoints.value
+    }
+  }
 }
 
 module "bootstrap" {

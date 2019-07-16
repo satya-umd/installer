@@ -2,71 +2,72 @@ package aws
 
 import (
 	"bytes"
-	"encoding/json"
-	"strconv"
+	"fmt"
 	"github.com/pkg/errors"
+	ini "gopkg.in/ini.v1"
 
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	
 )
 type CloudConfig struct {
 	Global global
-	ServiceOverride map[string]serviceOverride
 }
 
 type global struct{
-	Zone string
-	VPC string
-	SubnetID string
-	RouteTableID string
-	RoleARN string
-	KubernetesClusterTag string
-	KubernetesClusterID string
-	DisableSecurityGroupIngress bool
-	ElbSecurityGroup string
-	DisableStrictZoneCheck bool
+	Zone string `ini:"Zone,omitempty"`
+	VPC string `ini:"VPC,omitempty"`
+	SubnetID string `ini:"SubnetID,omitempty"`
+	RouteTableID string `ini:"RouteTableID,omitempty"`
+	RoleARN string `ini:"RoleARN,omitempty"`
+	KubernetesClusterTag string `ini:"KubernetesClusterTag,omitempty"`
+	KubernetesClusterID string `ini:"KubernetesClusterID,omitempty"`
+	DisableSecurityGroupIngress bool `ini:"DisableSecurityGroupIngress,omitempty"`
+	ElbSecurityGroup string `ini:"ElbSecurityGroup,omitempty"`
+	DisableStrictZoneCheck bool `ini:"DisableStrictZoneCheck,omitempty"`
 }
 
 type serviceOverride struct {
-	Service       string
-	Region        string
-	URL           string
-	SigningRegion string
-	SigningMethod string
-	SigningName   string
+	Service       string `ini:"Service"`
+	Region        string `ini:"Region"`
+	URL           string `ini:"URL"`
+	SigningRegion string `ini:"SigningRegion,omitempty"`
+	SigningMethod string `ini:"SigningMethod,omitempty"`
+	SigningName   string `ini:"SigningName,omitempty"`
 }
 
 func CloudProviderConfig(params *awstypes.Platform) (string, error) {
-	serviceOverrideObject, err := convertListToMap(params)
-	if err != nil {
-		return "", errors.Wrap(err, "could not make serviceOverride map")
-	}
+	file := ini.Empty()
 	config := &CloudConfig{
 		Global: global{
 
 		},
-		ServiceOverride: serviceOverrideObject,
+	}
+	if err := file.ReflectFrom(config); err != nil {
+		return "", errors.Wrap(err, "failed to reflect from config")
 	}
 
-	buff := &bytes.Buffer{}
-	encoder := json.NewEncoder(buff)
-	encoder.SetIndent("", "\t")
-	if err := encoder.Encode(config); err != nil {
-		return "", err
-	}
-	return buff.String(), nil
-}
-
-func convertListToMap(params *awstypes.Platform) (map[string]serviceOverride, error){
 	index := 1
-	mapObject := make(map[string]serviceOverride, len(params.CustomRegionOverride))
 	for _, t := range params.CustomRegionOverride {
-		mapObject[strconv.Itoa(index)] =  serviceOverride{
-			Service       : t.Service,
-			Region        : params.Region,
-			URL           : t.URL,
+		s, err := file.NewSection(fmt.Sprintf("ServiceOverride \"%d\"", index))
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to create section for ServiceOverride")
+		}
+		if err := s.ReflectFrom(
+			&serviceOverride{
+				Service       : t.Service,
+				Region        : params.Region,
+				URL           : t.URL,
+			}); err != nil {
+			return "", errors.Wrapf(err, "failed to reflect from  ServiceOverride")
 		}
 		index++
 	}
-	return mapObject,nil
+
+
+	buf := &bytes.Buffer{}
+	if _, err := file.WriteTo(buf); err != nil {
+		return "", errors.Wrap(err, "failed to write out cloud provider config")
+	}
+
+	return buf.String(), nil
 }
