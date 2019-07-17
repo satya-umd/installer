@@ -9,11 +9,13 @@ locals {
 
 provider "aws" {
   region = var.aws_region
-  dynamic "endpoints" {
-    for_each = var.custom_endpoints
-    content {
-      endpoints.key = endpoints.value
-    }
+
+  endpoints {
+    s3 = lookup(var.custom_endpoints, "s3", null)
+    ec2 = lookup(var.custom_endpoints, "ec2", null)
+    elb =  lookup(var.custom_endpoints, "elb", null)
+    iam =  lookup(var.custom_endpoints, "iam", null)
+    route53 =  lookup(var.custom_endpoints, "route53", null)
   }
 }
 
