@@ -16,7 +16,9 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	//Custom AWS Secret Region Struct
+	// CustomRegionOverride list contains custom endpoints which will overridde default
+	// service endpoint of AWS Services. 
+	// +optional
 	CustomRegionOverride []CustomEndpoint  `json:"customRegionOverride,omitempty"` 
 }
 
