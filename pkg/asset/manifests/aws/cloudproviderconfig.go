@@ -10,12 +10,12 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
-//CloudConfig is the aws cloud provider config
+// CloudConfig is the aws cloud provider config.
 type CloudConfig struct {
 	Global global
 }
 
-//global struct of CloudConfig which is currently not inialized
+// global struct of CloudConfig which is currently not inialized.
 type global struct {
 	Zone                        string `ini:"Zone,omitempty"`
 	VPC                         string `ini:"VPC,omitempty"`
@@ -29,7 +29,7 @@ type global struct {
 	DisableStrictZoneCheck      bool   `ini:"DisableStrictZoneCheck,omitempty"`
 }
 
-//serviceOverride struct used for service override
+// serviceOverride struct used for AWS service endpoint override.
 type serviceOverride struct {
 	Service       string `ini:"Service"`
 	Region        string `ini:"Region"`
@@ -39,7 +39,7 @@ type serviceOverride struct {
 	SigningName   string `ini:"SigningName,omitempty"`
 }
 
-//CloudProviderConfig builds the cloud provider config and reflects to an ini file
+// CloudProviderConfig builds the cloud provider config and reflects to an ini file.
 func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 	file := ini.Empty()
 	config := &CloudConfig{

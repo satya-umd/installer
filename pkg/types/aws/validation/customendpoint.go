@@ -23,7 +23,7 @@ var (
 	}()
 )
 
-//ValidateCustomEndpoints validates list of Custom Endpoints and appends the list of errors
+// ValidateCustomEndpoints validates list of Custom Endpoints and appends the list of errors
 func ValidateCustomEndpoints(endpoints *[]aws.CustomEndpoint, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for _, endpoint := range *endpoints {
@@ -32,12 +32,12 @@ func ValidateCustomEndpoints(endpoints *[]aws.CustomEndpoint, fldPath *field.Pat
 	return allErrs
 }
 
-//ValidateCustomEndpoint validates a Custom Endpoint object checking in supported service list etc.
+// ValidateCustomEndpoint validates a Custom Endpoint object checking in supported service list etc.
 // and appends the list of errors
 func ValidateCustomEndpoint(endpoint *aws.CustomEndpoint, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if endpoint.Service == "" {
-		// Check for empty custom endpoint struct
+		// Checks for empty custom endpoint struct
 		return allErrs
 	}
 	if val, ok := supportedServices[endpoint.Service]; !ok || !val {
