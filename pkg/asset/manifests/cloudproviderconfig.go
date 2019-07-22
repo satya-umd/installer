@@ -12,8 +12,8 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
-	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
+	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -82,6 +82,9 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case libvirttypes.Name, nonetypes.Name:
 		return nil
 	case awstypes.Name:
+		if len(installConfig.Config.Platform.AWS.CustomRegionOverride) == 0 {
+			return nil
+		}
 		awsConfig, err := aws.CloudProviderConfig(installConfig.Config.Platform.AWS)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
