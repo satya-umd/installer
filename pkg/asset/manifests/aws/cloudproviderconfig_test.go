@@ -3,9 +3,7 @@ package aws
 import (
 	"testing"
 
-	// "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types/aws"
-
 	"github.com/stretchr/testify/assert"
 )
 
