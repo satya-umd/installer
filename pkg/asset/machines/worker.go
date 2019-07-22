@@ -34,6 +34,7 @@ import (
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -68,7 +69,11 @@ func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
 }
 
 func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
-	return azuretypes.MachinePool{}
+	return azuretypes.MachinePool{
+		OSDisk: azuretypes.OSDisk{
+			DiskSizeGB: 128,
+		},
+	}
 }
 
 func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
@@ -151,6 +156,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case gcptypes.Name:
 		case libvirttypes.Name:
 			mpool := defaultLibvirtMachinePoolPlatform()
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
@@ -178,7 +184,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case azuretypes.Name:
 			mpool := defaultAzureMachinePoolPlatform()
-			mpool.InstanceType = azuredefaults.InstanceClass(installconfig.Config.Platform.Azure.Region)
+			mpool.InstanceType = azuredefaults.ComputeInstanceType(installconfig.Config.Platform.Azure.Region)
 			mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Azure)
 			pool.Platform.Azure = &mpool

@@ -16,6 +16,19 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	//Custom AWS Secret Region Struct
+	// CustomRegionOverride list contains custom endpoints which will overridde default
+	// service endpoint of AWS Services. 
+	// +optional
 	CustomRegionOverride []CustomEndpoint  `json:"customRegionOverride,omitempty"` 
+}
+
+func (p *Platform) FetchCustomEndpointsMap() (map[string]string)  {
+	endpointMap := make(map[string]string)	
+	if(len(p.CustomRegionOverride) == 0){
+		return nil
+	}
+	for _, endpoint := range p.CustomRegionOverride {
+		endpointMap[endpoint.Service] = endpoint.URL
+	}
+	return endpointMap
 }

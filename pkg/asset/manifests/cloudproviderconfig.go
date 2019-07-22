@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
-	ospclientconfig "github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 
 	corev1 "k8s.io/api/core/v1"
@@ -13,12 +12,13 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
-	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
-	"github.com/openshift/installer/pkg/asset/manifests/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
+	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -82,27 +82,16 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	case libvirttypes.Name, nonetypes.Name:
 		return nil
 	case awstypes.Name:
+		if len(installConfig.Config.Platform.AWS.CustomRegionOverride) == 0 {
+			return nil
+		}
 		awsConfig, err := aws.CloudProviderConfig(installConfig.Config.Platform.AWS)
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = awsConfig
 	case openstacktypes.Name:
-		opts := &ospclientconfig.ClientOpts{}
-		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
-		cloud, err := ospclientconfig.GetCloudFromYAML(opts)
-		if err != nil {
-			return errors.Wrap(err, "failed to get cloud config for openstack")
-		}
-		clouds := make(map[string]map[string]*ospclientconfig.Cloud)
-		clouds["clouds"] = map[string]*ospclientconfig.Cloud{
-			osmachine.CloudName: cloud,
-		}
-		marshalled, err := yaml.Marshal(clouds)
-		if err != nil {
-			return err
-		}
-		cm.Data[cloudProviderConfigDataKey] = string(marshalled)
+		cm.Data[cloudProviderConfigDataKey] = openstackmanifests.CloudProviderConfig()
 	case azuretypes.Name:
 		session, err := icazure.GetSession()
 		if err != nil {
@@ -118,6 +107,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "could not create cloud provider config")
 		}
 		cm.Data[cloudProviderConfigDataKey] = azureConfig
+	case gcptypes.Name:
 	case vspheretypes.Name:
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
 			installConfig.Config.ObjectMeta.Name,
