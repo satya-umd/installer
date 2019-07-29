@@ -40,11 +40,12 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	EtcdCluster  string
-	PullSecret   string
-	ReleaseImage string
-	Proxy        *configv1.ProxyStatus
-	Registries   []sysregistriesv2.Registry
+	AdditionalTrustBundle string
+	EtcdCluster           string
+	PullSecret            string
+	ReleaseImage          string
+	Proxy                 *configv1.ProxyStatus
+	Registries            []sysregistriesv2.Registry
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -61,6 +62,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
+		&kubeconfig.LoopbackClient{},
 		&machines.Master{},
 		&machines.Worker{},
 		&manifests.Manifests{},
@@ -216,11 +218,12 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, releaseI
 	}
 
 	return &bootstrapTemplateData{
-		PullSecret:   installConfig.PullSecret,
-		ReleaseImage: releaseImage,
-		EtcdCluster:  strings.Join(etcdEndpoints, ","),
-		Proxy:        &proxy.Status,
-		Registries:   registries,
+		AdditionalTrustBundle: installConfig.AdditionalTrustBundle,
+		PullSecret:            installConfig.PullSecret,
+		ReleaseImage:          releaseImage,
+		EtcdCluster:           strings.Join(etcdEndpoints, ","),
+		Proxy:                 &proxy.Status,
+		Registries:            registries,
 	}, nil
 }
 
@@ -418,6 +421,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
+		&kubeconfig.LoopbackClient{},
 		&tls.AdminKubeConfigCABundle{},
 		&tls.AggregatorCA{},
 		&tls.AggregatorCABundle{},

@@ -14,6 +14,7 @@ import (
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	openstackmanifests "github.com/openshift/installer/pkg/asset/manifests/openstack"
 	vspheremanifests "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
@@ -109,6 +110,11 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = azureConfig
 	case gcptypes.Name:
+		gcpConfig, err := gcpmanifests.CloudProviderConfig(clusterID.InfraID, installConfig.Config.GCP.ProjectID)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
+		}
+		cm.Data[cloudProviderConfigDataKey] = gcpConfig
 	case vspheretypes.Name:
 		vsphereConfig, err := vspheremanifests.CloudProviderConfig(
 			installConfig.Config.ObjectMeta.Name,

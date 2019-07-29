@@ -13,6 +13,11 @@ resource "google_project_iam_member" "master-network-admin" {
   member = "serviceAccount:${google_service_account.master-node-sa.email}"
 }
 
+resource "google_project_iam_member" "master-compute-security" {
+  role   = "roles/compute.securityAdmin"
+  member = "serviceAccount:${google_service_account.master-node-sa.email}"
+}
+
 resource "google_project_iam_member" "master-storage-admin" {
   role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.master-node-sa.email}"
@@ -26,7 +31,7 @@ resource "google_project_iam_member" "master-object-storage-admin" {
 resource "google_compute_instance" "master" {
   count = var.instance_count
 
-  name         = "${var.cluster_id}-master-${count.index}"
+  name         = "${var.cluster_id}-m-${count.index}"
   machine_type = var.machine_type
   zone         = element(var.zones, count.index)
 
@@ -34,7 +39,7 @@ resource "google_compute_instance" "master" {
     initialize_params {
       type  = var.root_volume_type
       size  = var.root_volume_size
-      image = var.image_name
+      image = var.image
     }
   }
 

@@ -45,7 +45,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
-				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name[:1], idx),
 				Labels: map[string]string{
 					"machine.openshift.io/cluster-api-cluster":      clusterID,
 					"machine.openshift.io/cluster-api-machine-role": role,
@@ -79,7 +79,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Boot:   true,
 			SizeGb: 128,
 			Type:   "pd-ssd",
-			Image:  osImage,
+			Image:  fmt.Sprintf("%s-rhcos-image", clusterID),
 		}},
 		NetworkInterfaces: []*gcpprovider.GCPNetworkInterface{{
 			Network:    fmt.Sprintf("%s-network", clusterID),

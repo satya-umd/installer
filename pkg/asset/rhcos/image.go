@@ -65,13 +65,13 @@ func (i *Image) Generate(p asset.Parents) error {
 		}
 		osimage, err = rhcos.AMI(ctx, config.Platform.AWS.Region)
 	case gcp.Name:
+		osimage, err = rhcos.GCP(ctx)
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case openstack.Name:
 		osimage = "rhcos"
 	case azure.Name:
-		//TODO(serbrech): change to right image once available.
-		osimage = "/resourceGroups/rhcos_images/providers/Microsoft.Compute/images/rhcostestimage"
+		osimage = "https://rhcospipelineimages2.blob.core.windows.net/imagebucket/rhcos-420devel.8.20190719.0.vhd"
 	case baremetal.Name:
 		osimage, err = rhcos.QEMU(ctx)
 	case none.Name, vsphere.Name:
