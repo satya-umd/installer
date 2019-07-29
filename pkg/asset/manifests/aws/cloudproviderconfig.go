@@ -3,6 +3,7 @@ package aws
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	ini "gopkg.in/ini.v1"
@@ -10,12 +11,12 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 )
 
-// CloudConfig is the aws cloud provider config.
-type CloudConfig struct {
+// cloudConfig is the aws cloud provider config.
+type cloudConfig struct {
 	Global global
 }
 
-// global struct of CloudConfig which is currently not inialized.
+// global struct of cloudConfig which is currently not inialized.
 type global struct {
 	Zone                        string `ini:"Zone,omitempty"`
 	VPC                         string `ini:"VPC,omitempty"`
@@ -42,16 +43,15 @@ type serviceOverride struct {
 // CloudProviderConfig builds the cloud provider config and reflects to an ini file.
 func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 	file := ini.Empty()
-	config := &CloudConfig{
+	config := &cloudConfig{
 		Global: global{},
 	}
 	if err := file.ReflectFrom(config); err != nil {
 		return "", errors.Wrap(err, "failed to reflect from config")
 	}
 
-	index := 1
-	for _, t := range params.CustomRegionOverride {
-		s, err := file.NewSection(fmt.Sprintf("ServiceOverride \"%d\"", index))
+	for index, t := range params.CustomRegionOverride {
+		s, err := file.NewSection(fmt.Sprintf("ServiceOverride %q", strconv.Itoa(index)))
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to create section for ServiceOverride")
 		}
@@ -63,7 +63,6 @@ func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 			}); err != nil {
 			return "", errors.Wrapf(err, "failed to reflect from  ServiceOverride")
 		}
-		index++
 	}
 
 	buf := &bytes.Buffer{}
