@@ -41,7 +41,7 @@ type serviceOverride struct {
 }
 
 // CloudProviderConfig builds the cloud provider config and reflects to an ini file.
-func CloudProviderConfig(params *awstypes.Platform) (string, error) {
+func CloudProviderConfig(awsPlatform *awstypes.Platform) (string, error) {
 	file := ini.Empty()
 	config := &cloudConfig{
 		Global: global{},
@@ -50,18 +50,18 @@ func CloudProviderConfig(params *awstypes.Platform) (string, error) {
 		return "", errors.Wrap(err, "failed to reflect from config")
 	}
 
-	for index, t := range params.CustomRegionOverride {
+	for index, endpoint := range awsPlatform.CustomRegionOverride {
 		s, err := file.NewSection(fmt.Sprintf("ServiceOverride %q", strconv.Itoa(index)))
 		if err != nil {
 			return "", errors.Wrapf(err, "failed to create section for ServiceOverride")
 		}
 		if err := s.ReflectFrom(
 			&serviceOverride{
-				Service: t.Service,
-				Region:  params.Region,
-				URL:     t.URL,
+				Service: endpoint.Service,
+				Region:  awsPlatform.Region,
+				URL:     endpoint.URL,
 			}); err != nil {
-			return "", errors.Wrapf(err, "failed to reflect from  ServiceOverride")
+			return "", errors.Wrapf(err, "failed to reflect from ServiceOverride")
 		}
 	}
 
