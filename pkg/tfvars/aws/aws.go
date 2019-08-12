@@ -76,6 +76,7 @@ func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig, workerConfigs []*
 		ExtraTags:               tags,
 		CustomEndpoints:         customEndpoints,
 		AMI:                     *masterConfig.AMI.ID,
+		
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
 		BootstrapInstanceType:   fmt.Sprintf("%s.large", instanceClass),

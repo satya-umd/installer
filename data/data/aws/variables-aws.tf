@@ -68,17 +68,17 @@ EOF
 }
 
 variable "aws_region" {
-  type = string
+  type        = string
   description = "The target AWS region for the cluster."
 }
 
 variable "aws_master_availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
 
 variable "aws_worker_availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 

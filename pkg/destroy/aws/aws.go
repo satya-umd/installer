@@ -1131,13 +1131,11 @@ func deleteElasticLoadBalancing(session *session.Session, arn arn.ARN, logger lo
 		id = segments[1]
 		switch subtype {
 		case "net":
-			//satya
 			return deleteElasticLoadBalancerV2(elbv2.New(session), arn, logger)
 		default:
 			return errors.Errorf("unrecognized elastic load balancing resource subtype %s", subtype)
 		}
 	case "targetgroup":
-		//satya
 		return deleteElasticLoadBalancerTargetGroup(elbv2.New(session), arn, logger)
 	default:
 		return errors.Errorf("unrecognized elastic load balancing resource type %s", resourceType)
